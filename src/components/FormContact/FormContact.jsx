@@ -1,5 +1,7 @@
 import { Formik } from 'formik';
-import PropTypes from 'prop-types';
+import Notiflix from 'notiflix';
+import 'notiflix';
+import { nanoid } from 'nanoid';
 import * as Yup from 'yup';
 import {
   Container,
@@ -9,7 +11,17 @@ import {
   Error,
   FormCont,
 } from './FormContact.styled';
+import { useDispatch, useSelector } from 'react-redux';
+import { getContacts } from 'redux/selector';
+import { addContact } from 'redux/contactsSlice';
 
+export const notiflix = {
+  position: 'center-top',
+  messageMaxLength: 180,
+  width: '360px',
+  fontSize: '20px',
+  cssAnimationStyle: 'zoom',
+};
 const validationSchema = Yup.object().shape({
   name: Yup.string()
     .matches(/^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$/, {
@@ -30,7 +42,10 @@ const validationSchema = Yup.object().shape({
     .required('Phone number is required'),
 });
 
-export const FormContact = ({ addContact }) => {
+export const FormContact = () => {
+  const contacts = useSelector(getContacts);
+  const dispatch = useDispatch();
+
   const initialValues = {
     name: '',
     number: '',
@@ -38,7 +53,19 @@ export const FormContact = ({ addContact }) => {
 
   const handleSubmit = (values, { resetForm }) => {
     const { name, number } = values;
-    addContact(name, number);
+    const isAlreadyInContacts = contacts.some(
+      contact =>
+        contact.name.toLowerCase().trim() === name.toLowerCase().trim() ||
+        contact.number === number
+    );
+    if (isAlreadyInContacts) {
+      Notiflix.Notify.info(`${name} is already in contacts`, notiflix);
+
+      return;
+    }
+    dispatch(addContact({ name, number, id: nanoid() }));
+    Notiflix.Notify.info(`Contact ${name} added`, notiflix);
+
     resetForm();
   };
 
@@ -74,68 +101,3 @@ export const FormContact = ({ addContact }) => {
     </Container>
   );
 };
-
-FormContact.propTypes = {
-  addContact: PropTypes.func.isRequired,
-};
-
-// export class FormContact extends Component {
-//   state = {
-//     name: '',
-//     number: '',
-//   };
-
-//   handleChange = e => {
-//     this.setState({ [e.target.name]: e.target.value });
-//   };
-
-//   handleSubmit = e => {
-//     e.preventDefault();
-//     const { name, number } = this.state;
-//     const { addContact } = this.props;
-//     addContact(name, number);
-//     this.resetForm();
-//   };
-//   resetForm = () => {
-//     this.setState({ name: '', number: '' });
-//   };
-
-//   render() {
-//     const { name, number } = this.state;
-//     const isFormEmpty = !name || !number;
-//     return (
-//       <form onSubmit={this.handleSubmit}>
-//         <label>
-//           Name
-//           <input
-//             type="text"
-//             name="name"
-//             pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-//             title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-//             required
-//             placeholder="Enter name"
-//             value={name}
-//             onChange={this.handleChange}
-//           />
-//         </label>
-
-//         <label>
-//           Phone number
-//           <input
-//             type="tel"
-//             name="number"
-//             pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-//             title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-//             required
-//             placeholder="Enter phone number"
-//             onChange={this.handleChange}
-//             value={number}
-//           />
-//         </label>
-//         <button type="submit" disabled={isFormEmpty}>
-//           Add contact
-//         </button>
-//       </form>
-//     );
-//   }
-// }

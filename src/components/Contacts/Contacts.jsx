@@ -1,50 +1,49 @@
-import PropTypes from 'prop-types';
+import Notiflix from 'notiflix';
+import 'notiflix';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeContact } from 'redux/contactsSlice';
+import { List, Message } from './Contacts.styled';
+import { getContacts, getFilter } from 'redux/selector';
+import { ContactItem } from 'components/ContactItem/ContactItem';
+import { notiflix } from 'components/FormContact/FormContact';
 
-import {
-  List,
-  ListItem,
-  Name,
-  Number,
-  Button,
-  TrashIcon,
-} from './Contacts.styled';
+export function Contacts() {
+  const contacts = useSelector(getContacts);
+  const filter = useSelector(getFilter);
+  const dispatch = useDispatch();
 
-export function Contacts({ contacts, removeContact }) {
+  const visibleContacts = () => {
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes((filter || '').toLowerCase())
+    );
+  };
+  const deleteContact = (id, name) => {
+    dispatch(removeContact(id));
+    Notiflix.Notify.info(`Contact ${name} deleted`, notiflix);
+  };
+
   return (
-    <List>
-      {contacts.map(contact => {
-        return (
-          <ListItem key={contact.id}>
-            <p>
-              <Name>{contact.name}:&nbsp;</Name>
-              <Number>{contact.number}</Number>
-            </p>
-            <Button
-              type="button"
-              onClick={() =>
-                removeContact({ idContact: contact.id, name: contact.name })
-              }
-            >
-              <TrashIcon
-                onClick={() =>
-                  removeContact({ idContact: contact.id, name: contact.name })
-                }
+    <>
+      {visibleContacts().length === 0 && contacts.length === 0 && (
+        <Message>No contacts available.</Message>
+      )}
+      {visibleContacts().length === 0 && contacts.length !== 0 && (
+        <Message>Contact not found</Message>
+      )}
+
+      {visibleContacts().length !== 0 && (
+        <List>
+          {visibleContacts().map(contact => {
+            return (
+              <ContactItem
+                key={contact.id}
+                contact={contact}
+                deleteContact={deleteContact}
               />
-            </Button>
-          </ListItem>
-        );
-      })}
-    </List>
+            );
+          })}
+        </List>
+      )}
+    </>
   );
 }
-
-Contacts.propTypes = {
-  contacts: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      number: PropTypes.string.isRequired,
-    })
-  ).isRequired,
-  removeContact: PropTypes.func.isRequired,
-};
