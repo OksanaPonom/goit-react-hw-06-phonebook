@@ -17,7 +17,7 @@ export function ContactItem({ contact, deleteContact }) {
         type="button"
         onClick={() => deleteContact(contact.id, contact.name)}
       >
-        <TrashIcon onClick={() => deleteContact(contact.id, contact.name)} />
+        <TrashIcon />
       </Button>
     </ListItem>
   );
